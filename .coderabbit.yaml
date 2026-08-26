@@ -12,6 +12,7 @@ reviews:
     drafts: false
     base_branches:
       - "main"
+      - "release-1.0.0"
 
   path_instructions:
 
