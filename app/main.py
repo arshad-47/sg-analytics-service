@@ -35,6 +35,7 @@ async def lifespan(app: FastAPI):
         logger.info("Postgres connected successfully.")
     except Exception as e:
         logger.error(f"Postgres connection failed: {e}")
+        raise
 
     # Check Redis
     try:
@@ -43,6 +44,7 @@ async def lifespan(app: FastAPI):
         logger.info("Redis connected successfully.")
     except Exception as e:
         logger.error(f"Redis connection failed: {e}")
+        raise
 
     # Check Qdrant
     try:
@@ -51,6 +53,7 @@ async def lifespan(app: FastAPI):
         logger.info("Qdrant connected successfully.")
     except Exception as e:
         logger.error(f"Qdrant connection failed: {e}")
+        raise
         
     logger.info("API connected and ready.")
     

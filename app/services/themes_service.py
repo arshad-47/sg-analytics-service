@@ -86,22 +86,41 @@ async def get_top_themes_with_voices_from_db() -> list[dict] | None:
 
 async def get_theme_voices_paginated_from_db(theme_id: str, page: int, page_size: int) -> dict | None:
     query = text("""
+        WITH total_count AS (
+            SELECT COUNT(*) AS total_voices
+            FROM analysis_results ar
+            JOIN submissions s
+                ON s.submission_id = ar.submission_id
+               AND s.tenant_code = ar.tenant_code
+            WHERE ar.theme_id = :theme_id
+        ),
+        paged AS (
+            SELECT
+                ar.id AS analysis_result_id,
+                ar.theme_id,
+                ar.statements AS description,
+                s.role AS voice_by,
+                s.district,
+                s.state
+            FROM analysis_results ar
+            JOIN submissions s
+                ON s.submission_id = ar.submission_id
+               AND s.tenant_code = ar.tenant_code
+            WHERE ar.theme_id = :theme_id
+            ORDER BY ar.id
+            LIMIT :page_size
+            OFFSET :offset
+        )
         SELECT
-            ar.id AS analysis_result_id,
-            ar.theme_id,
-            ar.statements AS description,
-            s.role AS voice_by,
-            s.district,
-            s.state,
-            COUNT(*) OVER () AS total_voices
-        FROM analysis_results ar
-        JOIN submissions s
-            ON s.submission_id = ar.submission_id
-           AND s.tenant_code = ar.tenant_code
-        WHERE ar.theme_id = :theme_id
-        ORDER BY ar.id
-        LIMIT :page_size
-        OFFSET :offset;
+            p.analysis_result_id,
+            p.theme_id,
+            p.description,
+            p.voice_by,
+            p.district,
+            p.state,
+            t.total_voices
+        FROM total_count t
+        LEFT JOIN paged p ON TRUE;
     """)
     
     offset = (page - 1) * page_size
@@ -116,14 +135,15 @@ async def get_theme_voices_paginated_from_db(theme_id: str, page: int, page_size
             if rows:
                 total_voices = rows[0].total_voices
                 for row in rows:
-                    voices.append({
-                        "analysis_result_id": str(row.analysis_result_id) if row.analysis_result_id else None,
-                        "theme_id": str(row.theme_id) if row.theme_id else None,
-                        "description": row.description,
-                        "voice_by": row.voice_by,
-                        "district": row.district,
-                        "state": row.state
-                    })
+                    if row.analysis_result_id is not None:
+                        voices.append({
+                            "analysis_result_id": str(row.analysis_result_id) if row.analysis_result_id else None,
+                            "theme_id": str(row.theme_id) if row.theme_id else None,
+                            "description": row.description,
+                            "voice_by": row.voice_by,
+                            "district": row.district,
+                            "state": row.state
+                        })
             
             return {
                 "voices": voices,

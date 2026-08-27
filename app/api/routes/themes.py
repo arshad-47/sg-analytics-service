@@ -16,6 +16,12 @@ router = APIRouter()
 )
 @limiter.limit(settings.RATE_LIMIT)
 async def get_top_themes(request: Request, query: ThemeQuery = Depends()):
+    """
+    Fetch the top themes along with up to 4 voices each.
+    
+    Retrieves the top aggregated themes. Results are cached and can be reset
+    using the query parameters.
+    """
     if query.reset:
         await redis_cache.flush_themes_cache()
 
@@ -43,6 +49,12 @@ async def get_theme_voices(
     theme_id: str = Path(..., title="The ID of the theme"),
     query: ThemeVoiceQuery = Depends()
 ):
+    """
+    Fetch paginated voices for a specific theme.
+    
+    Retrieves paginated voices associated with the provided theme ID.
+    Supports cache resetting per page via query parameters.
+    """
     if query.reset:
         await redis_cache.flush_theme_voices_cache(theme_id)
 

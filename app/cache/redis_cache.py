@@ -157,6 +157,10 @@ async def set_cached_theme_voices(theme_id: str, page: int, page_size: int, data
 
 async def flush_theme_voices_cache(theme_id: str) -> None:
     try:
+        # Escape Redis glob metacharacters to prevent matching unintended keys
+        for char in ['\\', '*', '?', '[', ']', '^', '-']:
+            theme_id = theme_id.replace(char, f'\\{char}')
+            
         keys = await client().keys(f"themes:{theme_id}:voices:*")
         if keys:
             await client().delete(*keys)

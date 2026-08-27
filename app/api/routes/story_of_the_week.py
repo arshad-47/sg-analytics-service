@@ -21,6 +21,12 @@ router = APIRouter()
 )
 @limiter.limit(settings.RATE_LIMIT)
 async def get_story_of_the_week(request: Request, query: StoryOfTheWeekQuery = Depends()):
+    """
+    Fetch the story of the week entries.
+    
+    Returns the top story submissions ordered by recency. Results are cached
+    and can be manually refreshed by passing the reset flag.
+    """
     if query.reset:
         await redis_cache.flush_story_of_the_week_cache()
 

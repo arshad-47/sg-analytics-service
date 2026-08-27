@@ -13,7 +13,7 @@ async def get_story_of_the_week_from_db() -> list[dict] | None:
                 s.submission_date,
                 ROW_NUMBER() OVER (
                     ORDER BY
-                        s.submission_date DESC,
+                        s.submission_date DESC NULLS LAST,
                         s.submission_id
                 ) AS story_number
             FROM submissions s

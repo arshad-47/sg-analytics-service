@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Query
 from ...core.config import settings
 from ...cache import redis_cache
 from ...services.community_feed_service import get_community_feed_from_db
@@ -19,7 +19,13 @@ router = APIRouter()
     ),
 )
 @limiter.limit(settings.RATE_LIMIT)
-async def get_community_feed(request: Request, query: CommunityFeedQuery = Depends()):
+async def get_community_feed(request: Request, query: CommunityFeedQuery = Query()):
+    """
+    Fetch the community feed stories.
+    
+    Returns up to 20 most recent stories with action_steps and impact populated.
+    Rejects any unknown query parameters.
+    """
     if query.reset:
         await redis_cache.flush_community_feed_cache()
 
